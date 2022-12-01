@@ -19,5 +19,17 @@ namespace JWT_Token.Controllers
 
             return Content($"<p>Hello to Code Maze {userName}</p>");
         }
+
+        [Authorize(Policy = "OnlySecondJwtScheme")]
+        [HttpGet("getWithSecondJwt")]
+        public IActionResult GetWithSecondJwt()
+        {
+            var userName = HttpContext.User.Claims
+                    .Where(x => x.Type == ClaimTypes.Name)
+                    .Select(x => x.Value)
+                    .FirstOrDefault();
+
+            return Content($"<p>Hello to Code Maze {userName}</p>");
+        }
     }
 }

@@ -14,11 +14,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "MultiAuthSchemes";
-    options.DefaultChallengeScheme = "MultiAuthSchemes";
-})
+
+
+
+//Authentication Section
+
+builder.Services.AddAuthentication()
     .AddCookie(options =>
     {
         options.LoginPath = "/auth/unauthorized";
@@ -36,6 +37,18 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@1"))
         };
     })
+    //.AddJwtBearer("DefaultJwtScheme", options =>
+    //{
+    //    options.TokenValidationParameters = new TokenValidationParameters
+    //    {
+    //        ValidateIssuer = true,
+    //        ValidateAudience = true,
+    //        ValidateIssuerSigningKey = true,
+    //        ValidIssuer = "https://localhost:7159/",
+    //        ValidAudience = "https://localhost:7159/",
+    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@2"))
+    //    };
+    //})
     .AddJwtBearer("SecondJwtScheme", options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -52,31 +65,32 @@ builder.Services.AddAuthentication(options =>
     {
         options.ForwardDefaultSelector = context =>
         {
-            string authorization = context.Request.Headers[HeaderNames.Authorization];
+            string? authorization = context.Request.Headers[HeaderNames.Authorization];
             if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
             {
                 var token = authorization.Substring("Bearer ".Length).Trim();
                 var jwtHandler = new JwtSecurityTokenHandler();
-
-                return (jwtHandler.CanReadToken(token) && jwtHandler.ReadJwtToken(token).Issuer.Equals("https://localhost:7208/"))
+                return (jwtHandler.CanReadToken(token) && jwtHandler.ReadJwtToken(token).Issuer.Equals("https://localhost:7159/"))
                     ? JwtBearerDefaults.AuthenticationScheme : "SecondJwtScheme";
             }
-
             return CookieAuthenticationDefaults.AuthenticationScheme;
         };
     });
 
+
+//Authorization Section
+
 builder.Services.AddAuthorization(options =>
 {
-    //var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
-    //    JwtBearerDefaults.AuthenticationScheme,
-    //    CookieAuthenticationDefaults.AuthenticationScheme,
-    //    "SecondJwtScheme");
+    var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+        JwtBearerDefaults.AuthenticationScheme,
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        "SecondJwtScheme");
 
-    //defaultAuthorizationPolicyBuilder =
-    //    defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+    defaultAuthorizationPolicyBuilder =
+        defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
 
-    //options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+    options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
 
     var onlySecondJwtSchemePolicyBuilder = new AuthorizationPolicyBuilder("SecondJwtScheme");
     options.AddPolicy("OnlySecondJwtScheme", onlySecondJwtSchemePolicyBuilder
@@ -87,8 +101,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("OnlyCookieScheme", onlyCookieSchemePolicyBuilder
         .RequireAuthenticatedUser()
         .Build());
-
 });
+
+
 
 var app = builder.Build();
 
@@ -100,14 +115,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
-
-
-
-public partial class Program { }

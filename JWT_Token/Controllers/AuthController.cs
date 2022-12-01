@@ -21,10 +21,10 @@ namespace JWT_Token.Controllers
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var tokenOptions = new JwtSecurityToken(
-                issuer: "https://localhost:7208/",
-                audience: "https://localhost:7208/",
+                issuer: "https://localhost:7159/",
+                audience: "https://localhost:7159/",
                 claims: new List<Claim>() { new Claim(ClaimTypes.Name, user.Username ?? string.Empty) },
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddSeconds(30),
                 signingCredentials: signinCredentials
             );
 
@@ -40,10 +40,10 @@ namespace JWT_Token.Controllers
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var tokenOptions = new JwtSecurityToken(
-                issuer: "https://localhost:7209/",
-                audience: "https://localhost:7208/",
+                issuer: "https://localhost:7159/",
+                audience: "https://localhost:7159/",
                 claims: new List<Claim>() { new Claim(ClaimTypes.Name, user.Username ?? string.Empty) },
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddSeconds(30),
                 signingCredentials: signinCredentials
             );
 
@@ -66,7 +66,7 @@ namespace JWT_Token.Controllers
                 {
                     IsPersistent = true,
                     AllowRefresh = true,
-                    ExpiresUtc = DateTime.UtcNow.AddDays(1)
+                    ExpiresUtc = DateTime.UtcNow.AddSeconds(30)
                 });
 
             return Ok();
